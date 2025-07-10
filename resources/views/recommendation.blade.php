@@ -1,96 +1,109 @@
-<?php
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cari Outfit Impianmu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        /* Custom style untuk slider */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4f46e5; /* Indigo */
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #4f46e5;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen px-4 py-8">
 
-namespace App\Http\Controllers;
+    <div class="w-full max-w-lg">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Cari Outfit Impianmu!</h1>
+            <p class="text-gray-500 mt-2">Geser slider dan pilih style yang kamu banget!</p>
+        </div>
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+        <div class="p-8 space-y-6 bg-white rounded-xl shadow-lg">
+            
+            <form action="/recommend" method="POST" class="space-y-8">
+                @csrf
 
-class RecommendationController extends Controller
-{
-    public function index()
-    {
-        $occasions = DB::table('occasions')->get();
-        return view('recommendation', ['occasions' => $occasions]);
-    }
+                {{-- Slider untuk Formalitas --}}
+                <div>
+                    <label for="target_formality" class="block text-sm font-medium text-gray-700 mb-1">
+                        Tingkat Formalitas: <span id="formality_value" class="font-bold text-indigo-600">5</span>
+                    </label>
+                    <div class="flex items-center space-x-4 text-xs text-gray-500">
+                        <span>Santai</span>
+                        <input type="range" name="target_formality" id="target_formality" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <span>Resmi</span>
+                    </div>
+                </div>
+                
+                {{-- Slider untuk Kehangatan --}}
+                <div>
+                    <label for="target_warmth" class="block text-sm font-medium text-gray-700 mb-1">
+                        Tingkat Kehangatan: <span id="warmth_value" class="font-bold text-indigo-600">5</span>
+                    </label>
+                     <div class="flex items-center space-x-4 text-xs text-gray-500">
+                        <span>Adem</span>
+                        <input type="range" name="target_warmth" id="target_warmth" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <span>Hangat</span>
+                    </div>
+                </div>
 
-    public function calculate(Request $request)
-    {
-        // === LANGKAH 1: PERSIAPAN ===
-        $occasionId = $request->input('occasion_id');
-        $profilIdeal = DB::table('occasions')->find($occasionId);
+                {{-- Pilihan Style/Genre --}}
+                <div>
+                    <label for="target_style_genre" class="block text-sm font-medium text-gray-700 mb-1">Pilih Gaya Kamu:</label>
+                    <select name="target_style_genre" id="target_style_genre" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition">
+                        <option value="Bumi">Cewek Bumi (Earth Tone)</option>
+                        <option value="Kue">Cewek Kue (Colorful)</option>
+                        <option value="Mamba">Cewek Mamba (Serba Hitam)</option>
+                        <option value="Anak Senja">Anak Senja (Indie)</option>
+                        <option value="Rapi">Kampus Boy (Rapi)</option>
+                        <option value="Streetwear">Streetwear (Hypebeast)</option>
+                        <option value="Netral">Netral / Basic</option>
+                    </select>
+                </div>
 
-        if (!$profilIdeal) {
-            // Jika acara tidak ditemukan, kembali ke halaman awal dengan pesan error
-            return redirect('/')->with('error', 'Acara tidak ditemukan!');
+                <div>
+                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                        Cari Outfit! ✨
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript sederhana untuk update nilai slider secara real-time
+        const formalitySlider = document.getElementById('target_formality');
+        const formalityValue = document.getElementById('formality_value');
+        formalitySlider.oninput = function() {
+            formalityValue.textContent = this.value;
         }
 
-        $semuaAtasan = DB::table('clothing_items')->where('category', 'Atasan')->get();
-        $semuaBawahan = DB::table('clothing_items')->where('category', 'Bawahan')->get();
-        $semuaSepatu = DB::table('clothing_items')->where('category', 'Sepatu')->get();
-
-        $hasilKombinasi = [];
-
-        // === LANGKAH 2: PROSES PENCOCOKAN ===
-        if ($semuaAtasan->isEmpty() || $semuaBawahan->isEmpty() || $semuaSepatu->isEmpty()) {
-             // Jika salah satu kategori pakaian kosong, langsung tampilkan hasil tanpa rekomendasi
-             return view('result', ['rekomendasi' => null]);
+        const warmthSlider = document.getElementById('target_warmth');
+        const warmthValue = document.getElementById('warmth_value');
+        warmthSlider.oninput = function() {
+            warmthValue.textContent = this.value;
         }
-        
-        foreach ($semuaAtasan as $atasan) {
-            foreach ($semuaBawahan as $bawahan) {
-                foreach ($semuaSepatu as $sepatu) {
-                    
-                    // A. Hitung Poin Penalti untuk setiap item
-                    $penaltiAtasan = $this->hitungPoinPenalti($atasan, $profilIdeal);
-                    $penaltiBawahan = $this->hitungPoinPenalti($bawahan, $profilIdeal);
-                    $penaltiSepatu = $this->hitungPoinPenalti($sepatu, $profilIdeal);
-                    
-                    // B. Hitung Total Poin Penalti untuk kombinasi ini.
-                    $totalPoinPenalti = $penaltiAtasan + $penaltiBawahan + $penaltiSepatu;
-                    
-                    // C. Simpan hasil perhitungan ke dalam array.
-                    $hasilKombinasi[] = [
-                        'atasan' => $atasan,
-                        'bawahan' => $bawahan,
-                        'sepatu' => $sepatu,
-                        'total_poin_penalti' => $totalPoinPenalti,
-                    ];
-                }
-            }
-        }
-
-        // === LANGKAH 3: RANKING & HASIL AKHIR ===
-        if (empty($hasilKombinasi)) {
-            return view('result', ['rekomendasi' => null]);
-        }
-        
-        // Urutkan array berdasarkan 'total_poin_penalti' dari yang terkecil
-        usort($hasilKombinasi, function ($a, $b) {
-            return $a['total_poin_penalti'] <=> $b['total_poin_penalti'];
-        });
-
-        $rekomendasiTerbaik = $hasilKombinasi[0]; 
-
-        return view('result', ['rekomendasi' => $rekomendasiTerbaik]);
-    }
-
-    private function hitungPoinPenalti($pakaian, $profilIdeal)
-    {
-        // Definisikan bobot untuk setiap kriteria
-        $bobotFormalitas = 1.5;
-        $bobotKehangatan = 1.0;
-        $bobotStyle = 2.0;
-
-        // Hitung selisih mutlak (jarak) untuk setiap kriteria.
-        $penaltiFormalitas = abs($pakaian->formality_score - $profilIdeal->target_formality) * $bobotFormalitas;
-        $penaltiKehangatan = abs($pakaian->warmth_score - $profilIdeal->target_warmth) * $bobotKehangatan;
-
-        // Hitung penalti untuk 'style_genre'.
-        $penaltiStyle = 0;
-        if ($pakaian->style_genre !== 'Netral' && $pakaian->style_genre !== $profilIdeal->target_style_genre) {
-            $penaltiStyle = 10 * $bobotStyle; // Penalti tinggi jika genre tidak cocok & bukan netral.
-        }
-
-        return $penaltiFormalitas + $penaltiKehangatan + $penaltiStyle;
-    }
-}
+    </script>
+</body>
+</html>

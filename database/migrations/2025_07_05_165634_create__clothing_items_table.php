@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->integer('comfort_score');
             $table->string('style_genre'); // Bumi, Kue, Mamba, Netral
             $table->string('tone_warna'); // Netral, Hangat, Dingin, dll.
-            // $table->string('image_path')->nullable(); // Opsional untuk gambar
+            $table->string('image_path')->nullable();
             $table->timestamps();
         });
     }
