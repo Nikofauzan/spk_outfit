@@ -7,42 +7,29 @@ use Illuminate\Support\Facades\DB;
 
 class RecommendationController extends Controller
 {
-    /**
-     * Halaman index sekarang tugasnya cuma menampilkan form.
-     * Tidak perlu mengambil data apa-apa lagi.
-     */
     public function index()
     {
         return view('recommendation');
     }
 
-    /**
-     * Fungsi untuk menghitung rekomendasi.
-     * Logikanya diubah untuk membangun profil ideal dari input user.
-     */
     public function calculate(Request $request)
     {
-        // === LANGKAH 1: BANGUN PROFIL IDEAL DARI INPUT USER ===
-        
-        // Validasi input dulu biar aman
+        // ... (Bagian validasi dan pembuatan $profilIdeal sama persis)
         $request->validate([
             'target_formality' => 'required|integer|min:1|max:10',
             'target_warmth' => 'required|integer|min:1|max:10',
+            'target_comfort' => 'required|integer|min:1|max:10',
             'target_style_genre' => 'required|string',
         ]);
 
-        // Buat objek "Profil Ideal" secara dinamis dari data yang dikirim form.
-        // Kita pakai (object) biar strukturnya mirip kayak data dari database.
         $profilIdeal = (object)[
             'target_formality' => $request->input('target_formality'),
             'target_warmth'    => $request->input('target_warmth'),
+            'target_comfort'   => $request->input('target_comfort'),
             'target_style_genre' => $request->input('target_style_genre'),
         ];
-
-        // === SISA LOGIKA DARI SINI KE BAWAH, SAMA PERSIS! ===
-        // Tidak perlu diubah sama sekali, karena dia akan otomatis membandingkan
-        // dengan $profilIdeal baru yang sudah kita buat.
-
+        
+        // ... (Bagian looping untuk atasan, bawahan, sepatu juga sama persis)
         $semuaAtasan = DB::table('clothing_items')->where('category', 'Atasan')->get();
         $semuaBawahan = DB::table('clothing_items')->where('category', 'Bawahan')->get();
         $semuaSepatu = DB::table('clothing_items')->where('category', 'Sepatu')->get();
@@ -59,7 +46,6 @@ class RecommendationController extends Controller
                     $penaltiBawahan = $this->hitungPoinPenalti($bawahan, $profilIdeal);
                     $penaltiSepatu = $this->hitungPoinPenalti($sepatu, $profilIdeal);
                     $totalPoinPenalti = $penaltiAtasan + $penaltiBawahan + $penaltiSepatu;
-
                     $hasilKombinasi[] = [
                         'atasan' => $atasan,
                         'bawahan' => $bawahan,
@@ -79,23 +65,48 @@ class RecommendationController extends Controller
         });
 
         $rekomendasiTerbaik = $hasilKombinasi[0];
+
+        // =================================================================
+        // LANGKAH 4: CARI AKSESORIS TAMBAHAN (INI BAGIAN BARUNYA!)
+        // =================================================================
+        $aksesorisTerbaik = null;
+        $semuaAksesoris = DB::table('clothing_items')->where('category', 'Aksesoris')->get();
+
+        // Hanya jalankan pencarian jika ada data aksesoris di database
+        if (!$semuaAksesoris->isEmpty()) {
+            $poinPenaltiTerendah = PHP_INT_MAX; // Set ke angka tertinggi
+
+            foreach ($semuaAksesoris as $aksesoris) {
+                $penaltiSekarang = $this->hitungPoinPenalti($aksesoris, $profilIdeal);
+                if ($penaltiSekarang < $poinPenaltiTerendah) {
+                    $poinPenaltiTerendah = $penaltiSekarang;
+                    $aksesorisTerbaik = $aksesoris;
+                }
+            }
+        }
+        
+        // Selipkan aksesoris terbaik (atau null jika tidak ada) ke dalam hasil rekomendasi
+        $rekomendasiTerbaik['aksesoris'] = $aksesorisTerbaik;
+        // =================================================================
+
         return view('result', ['rekomendasi' => $rekomendasiTerbaik]);
     }
 
     private function hitungPoinPenalti($pakaian, $profilIdeal)
     {
-        $bobotFormalitas = 1.5;
-        $bobotKehangatan = 1.0;
         $bobotStyle = 2.0;
-
-        $penaltiFormalitas = abs($pakaian->formality_score - $profilIdeal->target_formality) * $bobotFormalitas;
-        $penaltiKehangatan = abs($pakaian->warmth_score - $profilIdeal->target_warmth) * $bobotKehangatan;
+        $bobotFormalitas = 1.5;
+        $bobotKenyamanan = 1.2;
+        $bobotKehangatan = 1.0;
 
         $penaltiStyle = 0;
         if ($pakaian->style_genre !== 'Netral' && $pakaian->style_genre !== $profilIdeal->target_style_genre) {
             $penaltiStyle = 10 * $bobotStyle;
         }
+        $penaltiFormalitas = abs($pakaian->formality_score - $profilIdeal->target_formality) * $bobotFormalitas;
+        $penaltiKenyamanan = abs($pakaian->comfort_score - $profilIdeal->target_comfort) * $bobotKenyamanan;
+        $penaltiKehangatan = abs($pakaian->warmth_score - $profilIdeal->target_warmth) * $bobotKehangatan;
 
-        return $penaltiFormalitas + $penaltiKehangatan + $penaltiStyle;
+        return $penaltiStyle + $penaltiFormalitas + $penaltiKenyamanan + $penaltiKehangatan;
     }
 }

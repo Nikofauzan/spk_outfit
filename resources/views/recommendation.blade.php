@@ -12,15 +12,30 @@
         body {
             font-family: 'Poppins', sans-serif;
         }
-        /* Custom style untuk slider */
+        /* Custom style untuk slider agar terlihat lebih baik */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb; /* gray-200 */
+            border-radius: 9999px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        input[type=range]:hover {
+            opacity: 1;
+        }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
             width: 20px;
             height: 20px;
-            background: #4f46e5; /* Indigo */
+            background: #4f46e5; /* indigo-600 */
             cursor: pointer;
             border-radius: 50%;
+            box-shadow: 0 0 2px rgba(0,0,0,0.2);
         }
         input[type=range]::-moz-range-thumb {
             width: 20px;
@@ -28,6 +43,7 @@
             background: #4f46e5;
             cursor: pointer;
             border-radius: 50%;
+            border: none;
         }
     </style>
 </head>
@@ -46,25 +62,37 @@
 
                 {{-- Slider untuk Formalitas --}}
                 <div>
-                    <label for="target_formality" class="block text-sm font-medium text-gray-700 mb-1">
+                    <label for="target_formality" class="block text-sm font-medium text-gray-700 mb-2">
                         Tingkat Formalitas: <span id="formality_value" class="font-bold text-indigo-600">5</span>
                     </label>
                     <div class="flex items-center space-x-4 text-xs text-gray-500">
                         <span>Santai</span>
-                        <input type="range" name="target_formality" id="target_formality" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <input type="range" name="target_formality" id="target_formality" min="1" max="10" value="5" class="w-full">
                         <span>Resmi</span>
                     </div>
                 </div>
                 
                 {{-- Slider untuk Kehangatan --}}
                 <div>
-                    <label for="target_warmth" class="block text-sm font-medium text-gray-700 mb-1">
+                    <label for="target_warmth" class="block text-sm font-medium text-gray-700 mb-2">
                         Tingkat Kehangatan: <span id="warmth_value" class="font-bold text-indigo-600">5</span>
                     </label>
                      <div class="flex items-center space-x-4 text-xs text-gray-500">
                         <span>Adem</span>
-                        <input type="range" name="target_warmth" id="target_warmth" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <input type="range" name="target_warmth" id="target_warmth" min="1" max="10" value="5" class="w-full">
                         <span>Hangat</span>
+                    </div>
+                </div>
+
+                {{-- Slider untuk Kenyamanan --}}
+                <div>
+                    <label for="target_comfort" class="block text-sm font-medium text-gray-700 mb-2">
+                        Tingkat Kenyamanan: <span id="comfort_value" class="font-bold text-indigo-600">5</span>
+                    </label>
+                     <div class="flex items-center space-x-4 text-xs text-gray-500">
+                        <span>Praktis</span>
+                        <input type="range" name="target_comfort" id="target_comfort" min="1" max="10" value="5" class="w-full">
+                        <span>Nyaman</span>
                     </div>
                 </div>
 
@@ -93,17 +121,25 @@
 
     <script>
         // JavaScript sederhana untuk update nilai slider secara real-time
-        const formalitySlider = document.getElementById('target_formality');
-        const formalityValue = document.getElementById('formality_value');
-        formalitySlider.oninput = function() {
-            formalityValue.textContent = this.value;
+        function setupSlider(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const valueDisplay = document.getElementById(valueId);
+            
+            if (slider && valueDisplay) {
+                // Set nilai awal saat halaman dimuat
+                valueDisplay.textContent = slider.value;
+                
+                // Update nilai saat slider digeser
+                slider.addEventListener('input', function() {
+                    valueDisplay.textContent = this.value;
+                });
+            }
         }
 
-        const warmthSlider = document.getElementById('target_warmth');
-        const warmthValue = document.getElementById('warmth_value');
-        warmthSlider.oninput = function() {
-            warmthValue.textContent = this.value;
-        }
+        // Panggil fungsi untuk setiap slider
+        setupSlider('target_formality', 'formality_value');
+        setupSlider('target_warmth', 'warmth_value');
+        setupSlider('target_comfort', 'comfort_value');
     </script>
 </body>
 </html>
